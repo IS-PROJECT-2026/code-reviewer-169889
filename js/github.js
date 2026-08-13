@@ -107,3 +107,150 @@ export function filterSupportedFiles(treeEntries) {
     return SUPPORTED_EXTENSIONS.has(ext) || basename === 'package.json';
   });
 }
+
+/**
+ * Fetches the decoded UTF-8 content of a single file via the GitHub Contents API.
+ *
+ * Returns null if the file is not found (404) so a missing file doesn't abort
+ * the whole batch.
+ *
+ * @param {string} owner
+ * @param {string} repo
+ * @param {string} filePath - Relative path within the repo (e.g. "src/index.js").
+ * @returns {Promise<string|null>}
+ */
+export async function fetchFileContents(owner, repo, filePath) {
+  const BASE = 'https://api.github.com';
+  const url = `${BASE}/repos/${owner}/${repo}/contents/${filePath}`;
+
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: { Accept: 'application/vnd.github+json' },
+    });
+  } catch {
+    throw new Error('Network error. Check your connection and try again.');
+  }
+
+  if (response.status === 404) {
+    return null; // Missing file — skip gracefully
+  }
+
+  if (response.status === 403) {
+    const body = await response.json().catch(() => ({}));
+    if (body.message && body.message.toLowerCase().includes('rate limit')) {
+      throw new Error('GitHub API rate limit exceeded. Try again later.');
+    }
+    throw new Error(`GitHub API error: ${body.message ?? 'Forbidden'}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `Unexpected error fetching ${filePath} (HTTP ${response.status}).`
+    );
+  }
+
+  const data = await response.json();
+
+  // GitHub returns content as base64 with newlines — strip them before decoding
+  if (data.encoding === 'base64') {
+    const cleaned = data.content.replace(/\n/g, '');
+    return atob(cleaned);
+  }
+
+  // Fallback: content delivered as plain UTF-8 string
+  return data.content ?? null;
+}
+
+/**
+ * Fetches the content of every entry in filteredEntries in small batches,
+ * returning only the files that were successfully retrieved.
+ *
+ * @param {string} owner
+ * @param {string} repo
+ * @param {Array<{path: string}>} filteredEntries - Output of filterSupportedFiles.
+ * @param {number} [batchSize=5] - Number of concurrent requests per batch.
+ * @returns {Promise<Array<{path: string, content: string}>>}
+ */
+export async function fetchAllFileContents(
+  owner,
+  repo,
+  filteredEntries,
+  batchSize = 5
+) {
+  const results = [];
+
+  for (let i = 0; i < filteredEntries.length; i += batchSize) {
+    const batch = filteredEntries.slice(i, i + batchSize);
+
+    const settled = await Promise.all(
+      batch.map(async (entry) => {
+        const content = await fetchFileContents(owner, repo, entry.path);
+        return content !== null ? { path: entry.path, content } : null;
+      })
+    );
+
+    for (const item of settled) {
+      if (item !== null) results.push(item);
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Detects the primary project type from the fetched file entries.
+ *
+ * Strategy:
+ *  1. Find "package.json" among the results.
+ *  2. If absent → "Static HTML/CSS/JS".
+ *  3. If present, scan dependencies + devDependencies for known framework signals.
+ *  4. Fall back to "Node.js" when package.json exists but no framework matched.
+ *
+ * @param {Array<{path: string, content: string}>} fileEntries
+ * @returns {string} A human-readable project-type label.
+ */
+export function detectProjectType(fileEntries) {
+  // Use the root-level package.json only (path === 'package.json')
+  const pkgEntry = fileEntries.find((f) => f.path === 'package.json');
+
+  if (!pkgEntry) {
+    return 'Static HTML/CSS/JS';
+  }
+
+  let pkg;
+  try {
+    pkg = JSON.parse(pkgEntry.content);
+  } catch {
+    // Malformed package.json — treat as plain Node
+    return 'Node.js';
+  }
+
+  const deps = {
+    ...pkg.dependencies,
+    ...pkg.devDependencies,
+    ...pkg.peerDependencies,
+  };
+
+  // Order matters: more specific frameworks first
+  const FRAMEWORK_SIGNALS = [
+    { keys: ['next', 'next.js'], label: 'Next.js' },
+    { keys: ['nuxt', 'nuxt.js'], label: 'Nuxt.js' },
+    { keys: ['react', 'react-dom'], label: 'React' },
+    { keys: ['vue'], label: 'Vue' },
+    { keys: ['@angular/core'], label: 'Angular' },
+    { keys: ['svelte'], label: 'Svelte' },
+    { keys: ['express'], label: 'Express' },
+    { keys: ['fastify'], label: 'Fastify' },
+    { keys: ['koa'], label: 'Koa' },
+    { keys: ['hapi', '@hapi/hapi'], label: 'Hapi' },
+  ];
+
+  for (const { keys, label } of FRAMEWORK_SIGNALS) {
+    if (keys.some((k) => k in deps)) {
+      return label;
+    }
+  }
+
+  return 'Node.js';
+}
