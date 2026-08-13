@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Reviewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+
+    <main class="max-w-md mx-auto mt-20 p-6 rounded-lg shadow-md bg-white">
+
+      <h1 class="text-2xl font-semibold text-gray-800 mb-2">Code Reviewer</h1>
+      <p class="text-sm text-gray-500 mb-6">
+        Enter a public GitHub repository URL to start a review.
+      </p>
+
+      <form id="repo-form" novalidate>
+
+        <label
+          for="repo-url"
+          class="block text-sm font-medium text-gray-700 mb-1"
+        >
+          GitHub Repository URL
+        </label>
+
+        <input
+          id="repo-url"
+          type="url"
+          name="repo-url"
+          placeholder="https://github.com/username/project"
+          autocomplete="off"
+          spellcheck="false"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm
+                 shadow-sm placeholder-gray-400
+                 focus:outline-none focus:ring-2 focus:ring-indigo-500
+                 focus:border-indigo-500 transition"
+        />
+
+        <!-- Validation error area -->
+        <p
+          id="url-error"
+          role="alert"
+          aria-live="polite"
+          class="mt-1 text-sm text-red-600 min-h-[1.25rem]"
+        ></p>
+
+        <button
+          type="submit"
+          class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
+                 text-white text-sm font-medium py-2 px-4 rounded-md
+                 transition focus:outline-none focus:ring-2
+                 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          Review Repo
+        </button>
+
+      </form>
+
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
