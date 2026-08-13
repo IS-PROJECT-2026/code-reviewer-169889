@@ -68,3 +68,42 @@ export async function fetchRepoTree(owner, repo) {
   const treeData = await treeResponse.json();
   return treeData.tree; // Array of { path, type, sha, url, size? }
 }
+
+/**
+ * Filters a raw GitHub tree array down to reviewable source files.
+ *
+ * Rules applied (in order):
+ *  1. Keep only blob entries (skip trees / submodules).
+ *  2. Exclude paths inside node_modules/, dist/, build/, or .git/.
+ *  3. Keep files whose extension is one of the supported set, OR whose
+ *     basename is exactly "package.json".
+ *
+ * @param {Array<{path: string, type: string, sha: string}>} treeEntries
+ * @returns {Array} Filtered subset of the input array.
+ */
+export function filterSupportedFiles(treeEntries) {
+  const SUPPORTED_EXTENSIONS = new Set([
+    '.js', '.ts', '.jsx', '.tsx', '.html', '.css', '.json',
+  ]);
+
+  // Segments that mark dependency / build / vcs output — match at any level
+  const EXCLUDED_DIRS = ['node_modules', 'dist', 'build', '.git'];
+  const EXCLUDED_PREFIX_RE = new RegExp(
+    `(^|/)(?:${EXCLUDED_DIRS.map((d) => d.replace('.', '\\.')).join('|')})/`
+  );
+
+  return treeEntries.filter((entry) => {
+    // 1. Blobs only
+    if (entry.type !== 'blob') return false;
+
+    // 2. Skip excluded directories
+    if (EXCLUDED_PREFIX_RE.test(entry.path)) return false;
+
+    // 3. Check extension or special filename
+    const basename = entry.path.split('/').at(-1);
+    const dotIndex = basename.lastIndexOf('.');
+    const ext = dotIndex !== -1 ? basename.slice(dotIndex) : '';
+
+    return SUPPORTED_EXTENSIONS.has(ext) || basename === 'package.json';
+  });
+}

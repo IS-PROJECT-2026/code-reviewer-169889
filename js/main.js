@@ -1,5 +1,5 @@
 import { isValidGithubRepoUrl } from './validate.js';
-import { fetchRepoTree } from './github.js';
+import { fetchRepoTree, filterSupportedFiles } from './github.js';
 
 const form = document.getElementById('repo-form');
 const input = document.getElementById('repo-url');
@@ -42,9 +42,12 @@ form.addEventListener('submit', async (event) => {
 
   try {
     const tree = await fetchRepoTree(owner, repo);
-    // TODO (next issue): filter files and fetch contents
-    console.log(`Fetched tree for ${owner}/${repo} — ${tree.length} entries`);
-    console.log(tree);
+    const supported = filterSupportedFiles(tree);
+    // TODO (next issue): fetch contents for each supported file
+    console.log(
+      `Filtered ${tree.length} entries down to ${supported.length} supported files`
+    );
+    console.log(supported);
   } catch (err) {
     showError(err.message);
   } finally {
