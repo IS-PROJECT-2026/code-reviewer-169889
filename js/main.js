@@ -5,6 +5,7 @@ import {
   fetchAllFileContents,
   detectProjectType,
 } from './github.js';
+import { isLintableFile, runESLint } from './eslint-runner.js';
 
 const form = document.getElementById('repo-form');
 const input = document.getElementById('repo-url');
@@ -55,12 +56,31 @@ form.addEventListener('submit', async (event) => {
     const fileEntries = await fetchAllFileContents(owner, repo, supported);
     const projectType = detectProjectType(fileEntries);
 
-    // TODO (next issue): send to review pipeline / render results
     console.log(`Project type: ${projectType}`);
     console.log(
       `Successfully fetched content for ${fileEntries.length} / ${supported.length} files`
     );
-    console.log(fileEntries);
+
+    // ── ESLint pass ──────────────────────────────────────────────────────────
+    // Only lint JS/TS files; skip .html, .css, .json.
+    const lintResults = fileEntries
+      .filter((f) => isLintableFile(f.path))
+      .map((f) => ({
+        path: f.path,
+        findings: runESLint(f.content, f.path),
+      }));
+
+    const totalFindings = lintResults.reduce(
+      (sum, r) => sum + r.findings.length,
+      0
+    );
+
+    console.log(
+      `ESLint: ${totalFindings} finding(s) across ${lintResults.length} linted file(s)`
+    );
+    console.log(lintResults);
+
+    // TODO (next issue): send to review pipeline / render results
   } catch (err) {
     showError(err.message);
   } finally {
