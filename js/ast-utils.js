@@ -11,6 +11,12 @@
  */
 
 import * as acorn from 'https://cdn.jsdelivr.net/npm/acorn/+esm';
+import { tsPlugin } from 'https://cdn.jsdelivr.net/npm/@sveltejs/acorn-typescript/+esm';
+
+// Single extended parser that handles JS, TS, JSX, and TSX — no branching
+// on file extension needed. acorn-jsx is not imported separately because
+// @sveltejs/acorn-typescript bundles JSX support internally.
+const TSParser = acorn.Parser.extend(tsPlugin());
 
 // ── Parse ─────────────────────────────────────────────────────────────────────
 
@@ -28,7 +34,7 @@ import * as acorn from 'https://cdn.jsdelivr.net/npm/acorn/+esm';
  */
 export function parseToAST(code) {
   try {
-    return acorn.parse(code, {
+    return TSParser.parse(code, {
       ecmaVersion: 'latest',
       sourceType: 'module',
       locations: true,
