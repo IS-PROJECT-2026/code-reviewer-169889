@@ -6,6 +6,7 @@ import {
   detectProjectType,
 } from './github.js';
 import { isLintableFile, runESLint } from './eslint-runner.js';
+import { parseToAST } from './ast-utils.js';
 
 const form = document.getElementById('repo-form');
 const input = document.getElementById('repo-url');
@@ -80,6 +81,25 @@ form.addEventListener('submit', async (event) => {
     );
     console.log(lintResults);
 
+    // ── AST parse pass ─────────────────────────────────────────────────────
+    // Attempt to parse every lintable file into an AST. Files that fail
+    // (e.g. non-standard syntax, JSX without a transform) get ast === null.
+    // Structural analysis (long functions, deep nesting) is issue #6.
+    const lintableEntries = fileEntries.filter((f) => isLintableFile(f.path));
+    const astResults = lintableEntries.map((f) => ({
+      path: f.path,
+      ast: parseToAST(f.content),
+    }));
+
+    const parsedCount = astResults.filter((r) => r.ast !== null).length;
+    const failedCount = astResults.length - parsedCount;
+
+    console.log(
+      `AST: ${parsedCount} / ${astResults.length} file(s) parsed successfully` +
+        (failedCount > 0 ? ` (${failedCount} failed)` : '')
+    );
+
+    // TODO (next issue): run structural-analysis rules on astResults
     // TODO (next issue): send to review pipeline / render results
   } catch (err) {
     showError(err.message);
