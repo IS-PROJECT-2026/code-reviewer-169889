@@ -16,19 +16,25 @@ const LINTABLE_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx']);
  * Minimal rule config applied to every file.
  * Intentionally hardcoded – no separate config file needed for this milestone.
  *
- * `eslint-linter-browserify` uses ESLint's legacy flat-Linter API, so config
- * goes in the `verify()` options object as { parserOptions, env, rules }.
+ * Uses the flat-config `languageOptions` shape supported by
+ * `eslint-linter-browserify` 10.x (`Linter#verify`).
  */
 const ESLINT_CONFIG = {
-  parserOptions: {
+  languageOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    ecmaFeatures: { jsx: true },
-  },
-  env: {
-    browser: true,
-    es2022: true,
-    node: true,
+    parserOptions: {
+      ecmaFeatures: { jsx: true },
+    },
+    globals: {
+      window: 'readonly',
+      document: 'readonly',
+      console: 'readonly',
+      module: 'readonly',
+      require: 'readonly',
+      process: 'readonly',
+      // add any other browser/node globals your linted repos commonly use
+    },
   },
   rules: {
     'no-unused-vars': 'warn',
