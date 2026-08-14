@@ -8,6 +8,7 @@ import {
 import { isLintableFile, runESLint } from './eslint-runner.js';
 import { parseToAST } from './ast-utils.js';
 import { runStructuralRules } from './structural-rules.js';
+import { runRegexRules } from './regex-rules.js';
 
 const form = document.getElementById('repo-form');
 const input = document.getElementById('repo-url');
@@ -119,6 +120,22 @@ form.addEventListener('submit', async (event) => {
       `Structural: ${totalStructural} finding(s) across ${filesWithFindings.length} file(s)`
     );
     console.log(filesWithFindings);
+
+    // ── Regex-rules pass ──────────────────────────────────────────────────
+    // Runs on all fetched files (JS, TS, JSX, TSX, HTML, CSS, JSON).
+    // Detects hardcoded secrets, TODO/FIXME comments, and debug statements.
+    const regexResults = fileEntries.map((f) => ({
+      path: f.path,
+      findings: runRegexRules(f.content, f.path),
+    }));
+
+    const totalRegex = regexResults.reduce((sum, r) => sum + r.findings.length, 0);
+    const regexFilesWithFindings = regexResults.filter((r) => r.findings.length > 0);
+
+    console.log(
+      `Regex rules: ${totalRegex} finding(s) across ${regexFilesWithFindings.length} file(s)`
+    );
+    console.log(regexFilesWithFindings);
 
     // TODO (next issue): send to review pipeline / render results
   } catch (err) {
