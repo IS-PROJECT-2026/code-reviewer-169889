@@ -81,7 +81,7 @@ const KEYWORDS = new Set([
  *
  * Steps (in order):
  *  1. Strip `//` line comments.
- *  2. Strip `/* … */` block comments.
+ *  2. Strip block comments.
  *  3. Normalize template literals → STR.
  *  4. Normalize double-quoted strings → STR.
  *  5. Normalize single-quoted strings → STR.
@@ -101,10 +101,10 @@ export function normalizeCode(text) {
   return text
     .replace(/\/\/[^\n]*/g, ' ')
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/`[^`]*`/g, 'STR')
-    .replace(/"(?:[^"\\]|\\.)*"/g, 'STR')
-    .replace(/'(?:[^'\\]|\\.)*'/g, 'STR')
-    .replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, 'NUM')
+    .replace(/`[^`]*`/g, '0STR')
+    .replace(/"(?:[^"\\]|\\.)*"/g, '0STR')
+    .replace(/'(?:[^'\\]|\\.)*'/g, '0STR')
+    .replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '0NUM')
     .replace(/\b[a-zA-Z_$][a-zA-Z0-9_$]*\b/g, (m) => (KEYWORDS.has(m) ? m : 'ID'))
     .replace(/\s+/g, ' ')
     .trim();

@@ -129,11 +129,11 @@ test('preserves keywords', () => {
 });
 
 test('replaces numeric literals with NUM', () => {
-  assert.ok(normalizeCode('const x = 42;').includes('NUM'), 'number → NUM');
+  assert.ok(normalizeCode('const x = 42;').includes('0NUM'), 'number → 0NUM');
 });
 
 test('normalizes double-quoted strings to STR', () => {
-  assert.ok(normalizeCode('const s = "hello";').includes('STR'), 'string → STR');
+  assert.ok(normalizeCode('const s = "hello";').includes('0STR'), 'string → 0STR');
 });
 
 test('calculateTotal and calculateCost normalize to same string', () => {
