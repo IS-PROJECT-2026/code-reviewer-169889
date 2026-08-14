@@ -7,6 +7,7 @@ import {
 } from './github.js';
 import { isLintableFile, runESLint } from './eslint-runner.js';
 import { parseToAST } from './ast-utils.js';
+import { runStructuralRules } from './structural-rules.js';
 
 const form = document.getElementById('repo-form');
 const input = document.getElementById('repo-url');
@@ -88,7 +89,7 @@ form.addEventListener('submit', async (event) => {
     const lintableEntries = fileEntries.filter((f) => isLintableFile(f.path));
     const astResults = lintableEntries.map((f) => ({
       path: f.path,
-      ast: parseToAST(f.content),
+      ast: parseToAST(f.content, f.path),
     }));
 
     const parsedCount = astResults.filter((r) => r.ast !== null).length;
@@ -99,7 +100,26 @@ form.addEventListener('submit', async (event) => {
         (failedCount > 0 ? ` (${failedCount} failed)` : '')
     );
 
-    // TODO (next issue): run structural-analysis rules on astResults
+
+    // ── Structural-rules pass ───────────────────────────────────────────────
+    // Runs long-function + deep-nesting rules on every successfully-parsed
+    // file. Files that failed to parse (ast === null) are skipped silently.
+    const structuralResults = astResults.map((r) => ({
+      path: r.path,
+      findings: runStructuralRules(r.ast, r.path),
+    }));
+
+    const totalStructural = structuralResults.reduce(
+      (sum, r) => sum + r.findings.length,
+      0
+    );
+    const filesWithFindings = structuralResults.filter((r) => r.findings.length > 0);
+
+    console.log(
+      `Structural: ${totalStructural} finding(s) across ${filesWithFindings.length} file(s)`
+    );
+    console.log(filesWithFindings);
+
     // TODO (next issue): send to review pipeline / render results
   } catch (err) {
     showError(err.message);

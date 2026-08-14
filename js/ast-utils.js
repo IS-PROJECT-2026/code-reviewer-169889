@@ -10,13 +10,19 @@
  * @module ast-utils
  */
 
-import * as acorn from 'https://cdn.jsdelivr.net/npm/acorn/+esm';
+import * as acorn from 'https://cdn.jsdelivr.net/npm/acorn@8.18.0/+esm';
+import jsx from 'https://cdn.jsdelivr.net/npm/acorn-jsx/+esm';
 import { tsPlugin } from 'https://cdn.jsdelivr.net/npm/@sveltejs/acorn-typescript/+esm';
 
-// Single extended parser that handles JS, TS, JSX, and TSX — no branching
-// on file extension needed. acorn-jsx is not imported separately because
-// @sveltejs/acorn-typescript bundles JSX support internally.
-const TSParser = acorn.Parser.extend(tsPlugin());
+// Parser stack (left-to-right):
+//  1. acorn@8.18.0 – pinned to match @sveltejs/acorn-typescript’s internal
+//     import so both share the same browser module-cache entry and token-type
+//     object identity is preserved.
+//  2. acorn-jsx – overrides the tokeniser so `<tag>` in expression position is
+//     read as JSXTagStart, not less-than. acorn-jsx takes the Parser class via
+//     extend and has no internal acorn import — no module-identity risk.
+//  3. tsPlugin – TypeScript annotations, generics, interfaces, `as`, etc.
+const TSXParser = acorn.Parser.extend(jsx(), tsPlugin());
 
 // ── Parse ─────────────────────────────────────────────────────────────────────
 
@@ -29,17 +35,26 @@ const TSParser = acorn.Parser.extend(tsPlugin());
  * `locations: true` is always set so every node carries `.loc.start.line` and
  * `.loc.end.line`, which are required by {@link getFunctionLength}.
  *
- * @param {string} code - JavaScript source to parse.
+ * @param {string} code       - JavaScript source to parse.
+ * @param {string} [filename] - Optional filename shown in parse-error warnings.
  * @returns {import('acorn').Node | null} Root `Program` node, or `null` on failure.
  */
-export function parseToAST(code) {
+export function parseToAST(code, filename) {
   try {
-    return TSParser.parse(code, {
+    return TSXParser.parse(code, {
       ecmaVersion: 'latest',
       sourceType: 'module',
       locations: true,
     });
-  } catch {
+  } catch (err) {
+    const pos = err.pos ?? 0;
+    const snippet = code.slice(Math.max(0, pos - 25), pos + 25).replace(/\n/g, '↵');
+    console.warn(
+      `[ast-utils] parse error${filename ? ` in ${filename}` : ''} ` +
+        `at (${err.loc?.line}:${err.loc?.column}):`,
+      err.message,
+      `| context: "…${snippet}…"`
+    );
     return null;
   }
 }
