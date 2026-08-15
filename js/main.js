@@ -11,6 +11,7 @@ import { runStructuralRules } from './structural-rules.js';
 import { runRegexRules } from './regex-rules.js';
 import { runDuplicateDetection } from './duplicate-rules.js';
 import { normalizeFindings, calculateScores } from './scoring.js';
+import { renderDashboard } from './dashboard.js';
 
 const form = document.getElementById('repo-form');
 const input = document.getElementById('repo-url');
@@ -169,7 +170,9 @@ form.addEventListener('submit', async (event) => {
     console.log('--- Final Scoring Report ---');
     console.log(scoreReport);
 
-    // TODO (next issue): send to review pipeline / render results
+    renderDashboard(scoreReport, `${owner}/${repo}`);
+    
+    // TODO (next issue): send to review pipeline / render findings
   } catch (err) {
     showError(err.message);
   } finally {
