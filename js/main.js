@@ -9,6 +9,7 @@ import { isLintableFile, runESLint } from './eslint-runner.js';
 import { parseToAST } from './ast-utils.js';
 import { runStructuralRules } from './structural-rules.js';
 import { runRegexRules } from './regex-rules.js';
+import { runDuplicateDetection } from './duplicate-rules.js';
 
 const form = document.getElementById('repo-form');
 const input = document.getElementById('repo-url');
@@ -136,6 +137,22 @@ form.addEventListener('submit', async (event) => {
       `Regex rules: ${totalRegex} finding(s) across ${regexFilesWithFindings.length} file(s)`
     );
     console.log(regexFilesWithFindings);
+
+    // ── Duplicate-code pass ─────────────────────────────────────────────
+    // Merges content from all fetched files with ASTs (where available).
+    // Runs both function-body similarity and line-sequence detection.
+    const entriesForDuplicates = fileEntries.map((f) => ({
+      ...f,
+      ast: astResults.find((r) => r.path === f.path)?.ast ?? null,
+    }));
+    const duplicateResults = runDuplicateDetection(entriesForDuplicates);
+
+    const totalDuplicates = duplicateResults.reduce((sum, r) => sum + r.findings.length, 0);
+
+    console.log(
+      `Duplicates: ${totalDuplicates} finding(s) across ${duplicateResults.length} file(s)`
+    );
+    console.log(duplicateResults);
 
     // TODO (next issue): send to review pipeline / render results
   } catch (err) {

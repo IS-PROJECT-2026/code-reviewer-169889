@@ -96,11 +96,13 @@ export function filterSupportedFiles(treeEntries) {
     // 1. Blobs only
     if (entry.type !== 'blob') return false;
 
-    // 2. Skip excluded directories
+    // 2. Skip excluded directories and lockfiles
     if (EXCLUDED_PREFIX_RE.test(entry.path)) return false;
+    
+    const basename = entry.path.split('/').at(-1);
+    if (basename.endsWith('-lock.json') || basename.endsWith('.lock') || basename === 'pnpm-lock.yaml') return false;
 
     // 3. Check extension or special filename
-    const basename = entry.path.split('/').at(-1);
     const dotIndex = basename.lastIndexOf('.');
     const ext = dotIndex !== -1 ? basename.slice(dotIndex) : '';
 
