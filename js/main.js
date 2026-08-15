@@ -10,6 +10,7 @@ import { parseToAST } from './ast-utils.js';
 import { runStructuralRules } from './structural-rules.js';
 import { runRegexRules } from './regex-rules.js';
 import { runDuplicateDetection } from './duplicate-rules.js';
+import { normalizeFindings, calculateScores } from './scoring.js';
 
 const form = document.getElementById('repo-form');
 const input = document.getElementById('repo-url');
@@ -153,6 +154,20 @@ form.addEventListener('submit', async (event) => {
       `Duplicates: ${totalDuplicates} finding(s) across ${duplicateResults.length} file(s)`
     );
     console.log(duplicateResults);
+
+    // ── Scoring & Normalization ──────────────────────────────────────────────
+    const allResults = [
+      ...lintResults,
+      ...structuralResults,
+      ...regexResults,
+      ...duplicateResults,
+    ];
+
+    const normalizedFindings = normalizeFindings(allResults);
+    const scoreReport = calculateScores(normalizedFindings, fileEntries.length);
+
+    console.log('--- Final Scoring Report ---');
+    console.log(scoreReport);
 
     // TODO (next issue): send to review pipeline / render results
   } catch (err) {
