@@ -1,6 +1,7 @@
 /**
  * @module scoring
  */
+import { getRecommendation } from './recommendations.js';
 
 /**
  * Maps individual rule IDs to the five high-level report categories.
@@ -79,6 +80,7 @@ export function normalizeFindings(allResults) {
         category: category,
         severity: severityLabel,
         message: finding.message,
+        recommendation: getRecommendation(finding.ruleId),
       });
     }
   }
