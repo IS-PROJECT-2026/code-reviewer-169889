@@ -24,7 +24,7 @@ export async function fetchRepoTree(owner, repo) {
   }
 
   if (repoResponse.status === 404) {
-    throw new Error('Repository not found.');
+    throw new Error('Repository not found. If this is a private repo, RepoReview can only analyze public repositories.');
   }
 
   if (repoResponse.status === 403) {
@@ -181,23 +181,30 @@ export async function fetchAllFileContents(
   batchSize = 5
 ) {
   const results = [];
+  let rateLimitHit = false;
 
   for (let i = 0; i < filteredEntries.length; i += batchSize) {
+    if (rateLimitHit) break;
+
     const batch = filteredEntries.slice(i, i + batchSize);
 
-    const settled = await Promise.all(
+    const settled = await Promise.allSettled(
       batch.map(async (entry) => {
         const content = await fetchFileContents(owner, repo, entry.path);
         return content !== null ? { path: entry.path, content } : null;
       })
     );
 
-    for (const item of settled) {
-      if (item !== null) results.push(item);
+    for (const outcome of settled) {
+      if (outcome.status === 'fulfilled') {
+        if (outcome.value !== null) results.push(outcome.value);
+      } else {
+        rateLimitHit = true;
+      }
     }
   }
 
-  return results;
+  return { fileEntries: results, rateLimitHit, totalAttempted: filteredEntries.length };
 }
 
 /**
