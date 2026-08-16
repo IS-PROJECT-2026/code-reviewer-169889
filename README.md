@@ -1,4 +1,4 @@
-# RepoReview
+# RepoReview — Automated Code Review for Vibe-Coded Projects
 
 RepoReview is a web-based static analysis tool that reviews a public GitHub repository and generates a structured code review report, covering security, code quality, architecture, and AI/vibe-coding patterns.
 
