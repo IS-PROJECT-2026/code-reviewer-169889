@@ -47,24 +47,27 @@
 
 ## 4. Screenshots of Key GitHub Features
 
-> **CRITICAL FOR WORKING IMAGES:** Edit this file directly on the GitHub web interface, click the blank line below each prompt, and **paste (Ctrl+V / Cmd+V)** your screenshot.
 
 ### A. Milestones and Issues
+<img width="1919" height="946" alt="Screenshot 2026-08-13 170004" src="https://github.com/user-attachments/assets/6b9ad714-1fb2-4205-a40a-e61b702a0f73" />
 
 
 * **Caption:** Repo Fetching & Parsing milestone at 100% complete, showing all linked issues resolved.
 
 ### B. Project Board
+<img width="1919" height="627" alt="Screenshot 2026-08-14 170156" src="https://github.com/user-attachments/assets/3318da18-220e-4987-99b4-b62f42db411b" />
 
 
 * **Caption:** Project board showing issues distributed across all three columns, reflecting real task progression.
 
 ### C. Branching Architecture
+<img width="1917" height="848" alt="Screenshot 2026-08-13 165939" src="https://github.com/user-attachments/assets/b70cce79-cd4c-48b8-965e-c2552ef7bd03" />
 
 
 * **Caption:** Branch list showing feat/, fix/, and docs/ prefixed branches with linked PR numbers.
 
 ### D. Pull Requests & Traceability
+<img width="1919" height="933" alt="Screenshot 2026-08-13 171829" src="https://github.com/user-attachments/assets/5159f4c0-13d2-468a-8c43-5d05fb08678a" />
 
 
 * **Caption:** Merged PR showing direct issue linkage via the Development sidebar.
@@ -79,22 +82,8 @@
 
 ### Conflict 1 — Full Chronology
 
+
 **What cause did you use?** Same-line edit — two branches (`feat/16-conflict-demo-a` and `feat/17-conflict-demo-b`), created from the same starting commit, both modified the first line of `README.md` differently.
-
-#### Step 1: Generating the Clash
-
-
-* **Caption:** Attempting to merge feat/17-conflict-demo-b after feat/16-conflict-demo-a was already merged into main, both branches edited the same README title line.
-
-#### Step 2: Inside the Code Editor (Conflict Markers)
-
-
-* **Caption:** Raw conflict markers showing both competing versions of the README title line before resolution.
-
-#### Step 3: Resolution & Clean Merge
-
-
-* **Caption:** Branch graph showing both branches diverging from the same commit and merging cleanly through the resolution commit.
 
 ---
 
@@ -103,8 +92,7 @@
 **What cause did you use?** Modify/rename conflict — one branch renamed `js/recommendations.js` to `js/advice.js` while modifying its content; another branch modified the same file's original content without renaming it.
 
 **Why does this cause trigger a conflict?** Git tracks the rename as a content change on one side and a separate content change on the other, since both sides diverge from the same base file, Git cannot automatically determine which content belongs in the final (renamed) file, producing `CONFLICT (content): Merge conflict in js/advice.js`.
-
-
+<img width="1069" height="191" alt="Screenshot 2026-08-16 215636" src="https://github.com/user-attachments/assets/03c02054-1448-4104-b75e-cacff3d42e22" />
 
 * **Caption:** Branch A modified recommendations.js directly; Branch B renamed it to advice.js with different content changes, producing a rename/content conflict on merge.
 
@@ -117,6 +105,7 @@
 **Why does this cause trigger a conflict?** Git cannot reconcile "this file should no longer exist" with "this file has new changes," since there's no way to automatically merge a deletion with a content edit, producing `CONFLICT (modify/delete): js/validate.js deleted in [branch] and modified in HEAD`.
 
 
+<img width="1074" height="294" alt="Screenshot 2026-08-16 220445" src="https://github.com/user-attachments/assets/826b984f-485f-44f8-a253-d13a7eed7865" />
 
 * **Caption:** Branch A modified validate.js; Branch B deleted it entirely, producing a modify/delete conflict on merge. Resolved by keeping the file, since it's actively used by main.js.
 
