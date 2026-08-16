@@ -128,31 +128,145 @@ function escapeHTML(str) {
     .replace(/'/g, '&#39;');
 }
 
+let storedFindings = [];
+let currentSeverityFilter = 'All';
+let currentCategoryFilter = 'All';
+let filtersInitialized = false;
+
+const PILL_ACTIVE_STYLES = {
+  'All': ['bg-gray-800', 'text-white', 'border-transparent'],
+  'Critical': ['bg-red-500', 'text-white', 'border-red-500'],
+  'High': ['bg-orange-500', 'text-white', 'border-orange-500'],
+  'Medium': ['bg-yellow-500', 'text-white', 'border-yellow-500'],
+  'Low': ['bg-blue-500', 'text-white', 'border-blue-500']
+};
+
 /**
- * Renders the list of findings into the UI.
+ * Initializes filter event listeners if not already done.
+ */
+function initFilters() {
+  if (filtersInitialized) return;
+  filtersInitialized = true;
+
+  const severityBtns = document.querySelectorAll('.filter-severity');
+  severityBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const severity = e.currentTarget.getAttribute('data-severity');
+      
+      // Update UI active state
+      severityBtns.forEach(b => {
+        b.classList.remove('active', 'bg-gray-800', 'text-white', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'border-transparent', 'border-red-500', 'border-orange-500', 'border-yellow-500', 'border-blue-500');
+        b.classList.add('bg-white');
+      });
+      
+      const target = e.currentTarget;
+      target.classList.remove('bg-white');
+      target.classList.add('active');
+      
+      const activeStyles = PILL_ACTIVE_STYLES[severity];
+      if (activeStyles) {
+        target.classList.add(...activeStyles);
+      }
+
+      applyFindingsFilter(severity, undefined);
+    });
+  });
+
+  const categorySelect = document.getElementById('category-filter');
+  if (categorySelect) {
+    categorySelect.addEventListener('change', (e) => {
+      applyFindingsFilter(undefined, e.target.value);
+    });
+  }
+}
+
+/**
+ * Applies the current filters and re-renders the list.
+ */
+export function applyFindingsFilter(severity, category) {
+  if (severity !== undefined) currentSeverityFilter = severity;
+  if (category !== undefined) currentCategoryFilter = category;
+  
+  // Re-render using state
+  if (storedFindings) {
+    renderFindingsCards();
+  }
+}
+
+/**
+ * Handles initial load of new findings, resets UI, and renders.
  * @param {Array} normalizedFindings 
  */
 export function renderFindingsList(normalizedFindings) {
+  storedFindings = normalizedFindings || [];
+  currentSeverityFilter = 'All';
+  currentCategoryFilter = 'All';
+  
+  // Reset filter UI on new data load
+  const categorySelect = document.getElementById('category-filter');
+  if (categorySelect) categorySelect.value = 'All';
+  
+  // Directly reset visual state of pills without simulating clicks
+  const severityBtns = document.querySelectorAll('.filter-severity');
+  severityBtns.forEach(b => {
+    b.classList.remove('active', 'bg-gray-800', 'text-white', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'border-transparent', 'border-red-500', 'border-orange-500', 'border-yellow-500', 'border-blue-500');
+    b.classList.add('bg-white');
+    
+    // Make 'All' active
+    if (b.getAttribute('data-severity') === 'All') {
+      b.classList.remove('bg-white');
+      b.classList.add('active', ...PILL_ACTIVE_STYLES['All']);
+    }
+  });
+
+  // Ensure listeners are wired up
+  initFilters();
+
+  // Render cards
+  renderFindingsCards();
+}
+
+/**
+ * Private helper to render findings cards based on current state.
+ */
+function renderFindingsCards() {
+
   const container = document.getElementById('findings-list');
   if (!container) return;
 
   // Clear existing
   container.innerHTML = '';
 
-  if (!normalizedFindings || normalizedFindings.length === 0) {
-    container.innerHTML = `
-      <div class="bg-green-50 border border-green-100 rounded-xl p-8 text-center">
-        <i data-lucide="check-circle-2" class="w-12 h-12 text-green-500 mx-auto mb-3"></i>
-        <h4 class="text-lg font-bold text-green-800 mb-1">No issues found</h4>
-        <p class="text-green-600 text-sm">Great job! The codebase looks clean and secure.</p>
-      </div>
-    `;
+  const filteredFindings = storedFindings.filter(f => {
+    const sevMatch = currentSeverityFilter === 'All' || f.severity === currentSeverityFilter;
+    const catMatch = currentCategoryFilter === 'All' || f.category === currentCategoryFilter;
+    return sevMatch && catMatch;
+  });
+
+  if (filteredFindings.length === 0) {
+    if (storedFindings.length === 0) {
+      container.innerHTML = `
+        <div class="bg-green-50 border border-green-100 rounded-xl p-8 text-center">
+          <i data-lucide="check-circle-2" class="w-12 h-12 text-green-500 mx-auto mb-3"></i>
+          <h4 class="text-lg font-bold text-green-800 mb-1">No issues found</h4>
+          <p class="text-green-600 text-sm">Great job! The codebase looks clean and secure.</p>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
+          <i data-lucide="filter" class="w-12 h-12 text-gray-400 mx-auto mb-3"></i>
+          <h4 class="text-lg font-bold text-gray-700 mb-1">No findings match filters</h4>
+          <p class="text-gray-500 text-sm">Clear filters to see all ${storedFindings.length} findings.</p>
+        </div>
+      `;
+    }
     if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
     return;
   }
 
   const severityOrder = { 'Critical': 1, 'High': 2, 'Medium': 3, 'Low': 4 };
-  const sortedFindings = [...normalizedFindings].sort((a, b) => {
+  const sortedFindings = [...filteredFindings].sort((a, b) => {
     return (severityOrder[a.severity] || 5) - (severityOrder[b.severity] || 5);
   });
 
