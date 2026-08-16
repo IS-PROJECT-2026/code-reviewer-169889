@@ -1,5 +1,5 @@
 /**
- * @module recommendations
+ * @module advice
  * Provides suggested fixes and actionable advice for each rule violation.
  */
 
