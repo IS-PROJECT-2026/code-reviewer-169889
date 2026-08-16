@@ -202,6 +202,34 @@
           <i data-lucide="list-checks" class="w-6 h-6 text-gray-500"></i>
           Findings
         </h3>
+
+        <!-- Filter Bar -->
+        <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
+          
+          <!-- Severity Filter -->
+          <div class="flex flex-wrap items-center gap-2" id="severity-filters">
+            <span class="text-xs font-bold text-gray-400 mr-2 uppercase tracking-wider">Severity</span>
+            <button data-severity="All" class="filter-severity active px-4 py-1.5 text-sm font-semibold rounded-full transition-all bg-gray-800 text-white shadow-sm border border-transparent">All</button>
+            <button data-severity="Critical" class="filter-severity px-4 py-1.5 text-sm font-medium rounded-full transition-all bg-white border border-red-200 text-red-700 hover:bg-red-50">Critical</button>
+            <button data-severity="High" class="filter-severity px-4 py-1.5 text-sm font-medium rounded-full transition-all bg-white border border-orange-200 text-orange-700 hover:bg-orange-50">High</button>
+            <button data-severity="Medium" class="filter-severity px-4 py-1.5 text-sm font-medium rounded-full transition-all bg-white border border-yellow-200 text-yellow-700 hover:bg-yellow-50">Medium</button>
+            <button data-severity="Low" class="filter-severity px-4 py-1.5 text-sm font-medium rounded-full transition-all bg-white border border-blue-200 text-blue-700 hover:bg-blue-50">Low</button>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="flex items-center gap-3 w-full lg:w-auto">
+            <label for="category-filter" class="text-xs font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Category</label>
+            <select id="category-filter" class="w-full lg:w-48 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2 transition shadow-sm font-medium">
+              <option value="All">All Categories</option>
+              <option value="Security">Security</option>
+              <option value="CodeQuality">Code Quality</option>
+              <option value="Performance">Performance</option>
+              <option value="Architecture">Architecture</option>
+              <option value="AICodeSmells">AI Code Smells</option>
+            </select>
+          </div>
+        </div>
+
         <div id="findings-list" class="space-y-4">
           <!-- Populated dynamically by JS -->
         </div>
