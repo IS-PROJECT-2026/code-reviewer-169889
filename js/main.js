@@ -59,7 +59,12 @@ form.addEventListener('submit', async (event) => {
       `Filtered ${tree.length} entries down to ${supported.length} supported files`
     );
 
-    const fileEntries = await fetchAllFileContents(owner, repo, supported);
+    if (supported.length === 0) {
+      document.getElementById('dashboard-section').classList.add('hidden');
+      throw new Error('No supported files found in this repository (JS, TS, HTML, CSS, JSON, or package.json).');
+    }
+
+    const { fileEntries, rateLimitHit, totalAttempted } = await fetchAllFileContents(owner, repo, supported);
     const projectType = detectProjectType(fileEntries);
 
     console.log(`Project type: ${projectType}`);
@@ -170,12 +175,23 @@ form.addEventListener('submit', async (event) => {
     console.log('--- Final Scoring Report ---');
     console.log(scoreReport);
 
+    // Show warning banner if rate limited partway through
+    const banner = document.getElementById('rate-limit-warning');
+    const msg = document.getElementById('rate-limit-message');
+    if (rateLimitHit) {
+      msg.textContent = `Analysis based on ${fileEntries.length}/${totalAttempted} files. GitHub API rate limit was hit partway through.`;
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+    }
+
     renderDashboard(scoreReport, `${owner}/${repo}`);
     renderFindingsList(normalizedFindings);
     
     // TODO (next issue): send to review pipeline / finalize project
   } catch (err) {
     showError(err.message);
+    document.getElementById('dashboard-section').classList.add('hidden');
   } finally {
     setLoading(false);
   }
