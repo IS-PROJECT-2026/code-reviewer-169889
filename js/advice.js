@@ -4,7 +4,7 @@
  */
 
 export const RECOMMENDATIONS = {
-  'hardcoded-secret': 'Use environment variables and ensure secrets are not committed to the repository.',
+  'hardcoded-secret': 'Avoid hardcoding secrets in the code and ensure they are not committed to the repository.',
   'no-unused-vars': 'Remove unused variables to keep the codebase clean and avoid confusion.',
   'no-undef': 'Ensure all variables and functions are defined before use, or properly imported.',
   'eqeqeq': 'Use strict equality (=== and !==) to prevent unexpected type coercion.',
