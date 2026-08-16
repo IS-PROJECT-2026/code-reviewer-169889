@@ -1,7 +1,7 @@
 /**
  * @module scoring
  */
-import { getRecommendation } from './recommendations.js';
+import { getRecommendation } from './advice.js';
 
 /**
  * Maps individual rule IDs to the five high-level report categories.

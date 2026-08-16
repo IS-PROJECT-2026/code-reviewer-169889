@@ -7,7 +7,7 @@
  *   https://github.com/{owner}/{repo}.git
  *   https://github.com/{owner}/{repo}.git/
  *
- * @param {string} url - The URL string to validate.
+ * @param {string} repoUrl - The URL string to validate.
  * @returns {{ valid: boolean, owner: string|null, repo: string|null }}
  */
 export function isValidGithubRepoUrl(url) {
